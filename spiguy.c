@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <libgen.h>
+
 #include <linux/ioctl.h>
 #include <linux/spi/spidev.h>
 #include <sys/ioctl.h>
@@ -14,126 +16,221 @@
 #define NAME "spiguy"
 #define VERSION "0.1"
 
+static char *progname;
+static char *input = NULL;
+static char *output = NULL;
+static unsigned int bufsize = 0;
+
 struct option_values {
     char *device;
     int speed;
     int mode;
+    unsigned int maxsize;
 };
+
+static void quit(int exit_code)
+{
+    if(input != NULL) {
+        free(input);
+    }
+
+    if(output != NULL) {
+        free(output);
+    }
+    exit(exit_code);
+}
+
+static void slurp_stdin(char *buffer, uint32_t *size)
+{
+    int byte = getc(stdin);
+    unsigned int index = 0;
+
+    while((byte != EOF) && (index < bufsize)) {
+        buffer[index] = (char)(byte);
+        byte = getc(stdin);
+        index++;
+    }
+
+    if(ferror(stdin)) {
+        fprintf(stderr, "%s: Error reading from stdin.\n", progname);
+        quit(EXIT_FAILURE);
+    }
+
+    *size = index;
+}
+
+static void dump_stdout(char *buffer, uint32_t size)
+{
+    for(unsigned int x = 0; x < size; x++) {
+        putc(buffer[x], stdout);
+    }
+}
 
 static void usage(char *name)
 {
-    fprintf(stderr, "usage: %s options...\n", name);
-    fprintf(stderr, "  options:\n");
-    fprintf(stderr, "    -d --device=<dev>   Target spidev device.\n");
+    fprintf(stderr, "Usage: %s SPIDEV_DEVICE [options]\n\n", name);
+
+    fprintf(stderr, "Runs a duplex SPI transaction. Collects all data from ");
+    fprintf(stderr, "stdin and \ntransmits it over the target spidev device. ");
+    fprintf(stderr, "Data is retrieved\nsimultaneously, and the result is ");
+    fprintf(stderr, "printed to stdout.\n");
+    fprintf(stderr, "\nOptions:\n");
     fprintf(stderr, "    -s --speed=<speed>  Maximum SPI clock rate (in Hz).\n");
     fprintf(stderr, "    -m --mode=<int>     SPI transfer mode.\n");
+    fprintf(stderr, "    -g --maxsize=<int>  Maximum transfer size in bytes ");
+    fprintf(stderr, "(default: 8192)\n");
     fprintf(stderr, "    -h --help           Display this screen.\n");
     fprintf(stderr, "    -v --version        Display the version number.\n");
 }
 
-struct option_values parse_args(int argc, char *argv[])
+static struct option_values parse_args(int argc, char *argv[])
 {
-
-    struct option_values retval = {.device = NULL, .speed = -1, .mode = -1};
     int opt;
     int long_index = 0;
+    struct option_values retval = {
+        .device = NULL, .speed = -1,
+        .mode = -1, .maxsize = 8192
+    };
 
     struct option options[] = {
-        {"device",  required_argument, NULL, 'd'},
         {"speed",   required_argument, NULL, 's'},
         {"mode",    required_argument, NULL, 'm'},
+        {"maxsize", required_argument, NULL, 'g'},
         {"help",    no_argument, NULL, 'h'},
         {"version", no_argument, NULL, 'v'},
         {0, 0, 0, 0}
     };
 
-    while((opt = getopt_long(argc, argv, "d:s:b:n:rhv", options,
+    while((opt = getopt_long(argc, argv, "s:m:g:hv", options,
                              &long_index)) >= 0) {
         switch(opt) {
         case 'h':
-            usage(argv[0]);
-            exit(EXIT_SUCCESS);
+            usage(progname);
+            quit(EXIT_SUCCESS);
             break;
 
         case 'v':
             fprintf(stderr, "%s - %s\n", NAME, VERSION);
-            exit(EXIT_SUCCESS);
-            break;
-
-        case 'd':
-            retval.device = optarg;
-            if(access(retval.device, F_OK | R_OK | W_OK) != 0) {
-                fprintf(stderr, "%s: Invalid SPI device [%s]\n", argv[0],
-                        retval.device);
-                exit(EXIT_FAILURE);
-            }
+            quit(EXIT_SUCCESS);
             break;
 
         case 's':
             if(!sscanf(optarg, "%d", &retval.speed)) {
-                fprintf(stderr, "%s: Invalid speed [%d]\n", argv[0],
-                        retval.speed);
-                exit(EXIT_FAILURE);
+                fprintf(stderr, "%s: Invalid SPI clock speed [%s].\n", progname,
+                        optarg);
+                quit(EXIT_FAILURE);
             }
 
             if((retval.speed < 100) || (retval.speed > 100000000)) {
-                fprintf(stderr, "%s: Speed is out of bounds\n", argv[0]);
-                exit(EXIT_FAILURE);
+                fprintf(stderr, "%s: Speed is out of bounds\n", progname);
+                quit(EXIT_FAILURE);
             }
             break;
 
         case 'm':
             if(!sscanf(optarg, "%d", &retval.mode)) {
-                fprintf(stderr, "%s: Invalid mode [%d]\n", argv[0],
-                        retval.mode);
-                exit(EXIT_FAILURE);
+                fprintf(stderr, "%s: Invalid SPI transfer mode [%s].\n",
+                        progname, optarg);
+                quit(EXIT_FAILURE);
             }
 
             if((retval.mode < 0) || (retval.mode > 3)) {
-                fprintf(stderr, "%s: Mode is out of bounds\n", argv[0]);
-                exit(EXIT_FAILURE);
+                fprintf(stderr, "%s: Mode is out of bounds\n", progname);
+                quit(EXIT_FAILURE);
+            }
+            break;
+
+        case 'g':
+            if(!sscanf(optarg, "%u", &retval.maxsize)) {
+                fprintf(stderr, "%s: Invalid transfer size [%s]\n", progname,
+                        optarg);
+                quit(EXIT_FAILURE);
             }
             break;
 
         default:
             fprintf(stderr, "%s: Invalid option -%c. See -h/--help.\n",
-                    argv[0], opt);
-            exit(EXIT_FAILURE);
+                    progname, opt);
+            quit(EXIT_FAILURE);
         }
     }
 
-    if(retval.device == NULL) {
-        fprintf(stderr, "%s: -d/--device argument is mandatory.\n", argv[0]);
-        exit(EXIT_FAILURE);
+    if((argc - optind) != 1) {
+        usage(progname);
+        quit(EXIT_FAILURE);
+    }
+
+    retval.device = argv[optind];
+
+    if(access(retval.device, F_OK | R_OK | W_OK) != 0) {
+        fprintf(stderr, "%s: Invalid SPI device [%s]\n", progname,
+                retval.device);
+        quit(EXIT_FAILURE);
     }
 
     return retval;
 }
 
+void run_spi(char *in, char *out, uint32_t len, struct option_values *args)
+{
+    int fd = open(args->device, O_RDWR);
+
+    if(fd < 0) {
+        perror(args->device);
+        quit(EXIT_FAILURE);
+    }
+
+    if(args->speed != -1) {
+        if(ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &args->speed) != 0) {
+            fprintf(stderr, "Failed to set speed to %d\n", args->speed);
+            perror("SPI_IOC_WR_MAX_SPEED_HZ");
+            quit(EXIT_FAILURE);
+        }
+    }
+
+    if(args->mode != -1) {
+        if(ioctl(fd, SPI_IOC_WR_MODE, &args->mode) != 0) {
+            fprintf(stderr, "Failed to set speed to %d\n", args->mode);
+            perror("SPI_IOC_WR_MODE");
+            quit(EXIT_FAILURE);
+        }
+    }
+
+    memcpy(out, in, len);
+}
+
 int main(int argc, char *argv[])
 {
-    struct option_values args = parse_args(argc, argv);
+    struct option_values args;
+    uint32_t transfer_size;
 
-    fprintf(stdout, "Speed: %d\n", args.speed);
-    fprintf(stdout, "Mode: %d\n", args.mode);
-    fprintf(stdout, "Device: %s\n", args.device);
+    progname = basename(argv[0]);
+    args = parse_args(argc, argv);
 
-    if(args.speed != -1) {
-        if(ioctl(fd, SPI_IOC_WR_MAX_SPEED_HZ, &args.speed) != 0) {
-            fprintf(stderr, "Failed to set speed to %d\n", args.speed);
-            perror("SPI_IOC_WR_MAX_SPEED_HZ");
-            exit(EXIT_FAILURE);
-        }
+    fprintf(stderr, "Speed:  %d\n", args.speed);
+    fprintf(stderr, "Mode:   %d\n", args.mode);
+    fprintf(stderr, "Device: %s\n", args.device);
+    fprintf(stderr, "Size:   %u\n", args.maxsize);
+
+    bufsize = args.maxsize;
+    input = malloc(bufsize);
+    output = malloc(bufsize);
+
+    if(input == NULL) {
+        fprintf(stderr, "%s: Couldn't allocte input buffer.\n", progname);
+        quit(EXIT_FAILURE);
     }
 
-    if(args.mode != -1) {
-        if(ioctl(fd, SPI_IOC_WR_MODE, &args.mode) != 0) {
-            fprintf(stderr, "Failed to set speed to %d\n", args.mode);
-            perror("SPI_IOC_WR_MODE");
-            exit(EXIT_FAILURE);
-        }
+    if(output == NULL) {
+        fprintf(stderr, "%s: Couldn't allocte output buffer.\n", progname);
+        quit(EXIT_FAILURE);
     }
 
-    return EXIT_SUCCESS;
+    slurp_stdin(input, &transfer_size);
+
+    run_spi(input, output, transfer_size, &args);
+
+    dump_stdout(output, transfer_size);
+    quit(EXIT_SUCCESS);
 }
 
