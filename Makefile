@@ -5,6 +5,10 @@ SYNTAX_OPTS := -Wall -Wextra -pedantic -Werror -fsyntax-only
 CC := gcc
 CFLAGS := -O2
 
+prefix ?= /usr
+bindir ?= $(prefix)/bin
+DESTDIR ?= 
+
 all: $(NAME)
 
 define \n
@@ -25,3 +29,8 @@ $(NAME): $(SRC)
 
 clean:
 	rm -f $(NAME)
+
+install: $(NAME)
+	cp $(NAME) $(abspath $(DESTDIR)/$(bindir))
+	chmod 755 $(abspath $(DESTDIR)/$(bindir)/$(NAME))
+	chown root:root $(abspath $(DESTDIR)/$(bindir)/$(NAME))
