@@ -68,19 +68,21 @@ static void dump_stdout(char *buffer, uint32_t size)
 
 static void usage(char *name)
 {
-    fprintf(stderr, "Usage: %s SPIDEV_DEVICE [options]\n\n", name);
+    fprintf(stderr, "Usage: %s DEVICE [options]\n\n", name);
 
-    fprintf(stderr, "Runs a duplex SPI transaction. Collects all data from ");
-    fprintf(stderr, "stdin and \ntransmits it over the target spidev device. ");
-    fprintf(stderr, "Data is retrieved\nsimultaneously, and the result is ");
-    fprintf(stderr, "printed to stdout.\n");
-    fprintf(stderr, "\nOptions:\n");
-    fprintf(stderr, "    -s --speed=<speed>  Maximum SPI clock rate (in Hz).\n");
-    fprintf(stderr, "    -m --mode=<int>     SPI transfer mode.\n");
-    fprintf(stderr, "    -g --maxsize=<int>  Maximum transfer size in bytes ");
+    fprintf(stderr, "Collects all data from stdin and transmits it over the ");
+    fprintf(stderr, "MOSI line of a\ntarget spidev device. Data is ");
+    fprintf(stderr, "transferred in a single SPI transaction.\nAll data ");
+    fprintf(stderr, "received over MISO is printed to stdout.\n");
+    fprintf(stderr, "\nPositional arguments:\n");
+    fprintf(stderr, "  DEVICE               Target spidev device.\n");
+    fprintf(stderr, "\nOptional arguments:\n");
+    fprintf(stderr, "  -s, --speed=<speed>  Maximum SPI clock rate (in Hz).\n");
+    fprintf(stderr, "  -m, --mode=<int>     SPI transfer mode.\n");
+    fprintf(stderr, "  -g, --maxsize=<int>  Maximum transfer size in bytes ");
     fprintf(stderr, "(default: 8192)\n");
-    fprintf(stderr, "    -h --help           Display this screen.\n");
-    fprintf(stderr, "    -v --version        Display the version number.\n");
+    fprintf(stderr, "  -h, --help           Display this screen.\n");
+    fprintf(stderr, "  -v, --version        Display the version number.\n");
 }
 
 static struct option_values parse_args(int argc, char *argv[])
