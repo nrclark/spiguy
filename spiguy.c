@@ -211,6 +211,11 @@ int run_spi(char *in, char *out, uint32_t len, struct option_values *args)
     }
 
     retval = ioctl(fd, SPI_IOC_MESSAGE(1), &transfer);
+
+    if(retval == EXIT_SUCCESS) {
+        perror("SPI_IOC_MESSAGE(1)");
+    } 
+
     return retval;
 }
 
