@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <getopt.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -173,9 +174,19 @@ static struct option_values parse_args(int argc, char *argv[])
     return retval;
 }
 
-void run_spi(char *in, char *out, uint32_t len, struct option_values *args)
+int run_spi(char *in, char *out, uint32_t len, struct option_values *args)
 {
     int fd = open(args->device, O_RDWR);
+    int retval;
+    struct spi_ioc_transfer transfer = {
+        .tx_buf = (uintptr_t) in,
+        .rx_buf = (uintptr_t) out,
+        .len = len,
+        .speed_hz = args->speed,
+        .delay_usecs = 0,
+        .bits_per_word = 8,
+        .cs_change = true
+    };
 
     if(fd < 0) {
         perror(args->device);
@@ -196,15 +207,18 @@ void run_spi(char *in, char *out, uint32_t len, struct option_values *args)
             perror("SPI_IOC_WR_MODE");
             quit(EXIT_FAILURE);
         }
+
     }
 
-    memcpy(out, in, len);
+    retval = ioctl(fd, SPI_IOC_MESSAGE(1), &transfer);
+    return retval;
 }
 
 int main(int argc, char *argv[])
 {
     struct option_values args;
     uint32_t transfer_size;
+    int retval;
 
     progname = basename(argv[0]);
     args = parse_args(argc, argv);
@@ -230,9 +244,14 @@ int main(int argc, char *argv[])
 
     slurp_stdin(input, &transfer_size);
 
-    run_spi(input, output, transfer_size, &args);
+    retval = run_spi(input, output, transfer_size, &args);
 
-    dump_stdout(output, transfer_size);
-    quit(EXIT_SUCCESS);
+    if(retval == EXIT_SUCCESS) {
+        dump_stdout(output, transfer_size);
+    } else {
+        fprintf(stderr, "%s: Couldn't complete SPI successfully.\n", progname);
+    }
+
+    quit(retval);
 }
 
