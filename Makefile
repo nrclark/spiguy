@@ -2,8 +2,8 @@ SRC := spiguy.c
 NAME := spiguy
 SYNTAX_OPTS := -Wall -Wextra -pedantic -Werror -fsyntax-only
 
-CC := gcc
-CFLAGS := -O2 -Wall -Wextra -pedantic
+CC ?= gcc
+CFLAGS ?= -O2 -Wall -Wextra -pedantic
 
 prefix ?= /usr
 bindir ?= $(prefix)/bin
