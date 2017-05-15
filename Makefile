@@ -9,14 +9,12 @@ prefix ?= /usr
 bindir ?= $(prefix)/bin
 DESTDIR ?= 
 
-all: $(NAME)
+all: $(NAME) spidev_test
 
 define \n
 
 
 endef
-
-$(NAME):
 
 syntax:
 	$(foreach x,$(SRC),$(CC) $(SYNTAX_OPTS) $(x)$(\n))
@@ -27,11 +25,14 @@ format:
 $(NAME): $(SRC)
 	$(CC) $(CFLAGS)	$(filter %.c,$^) -o $@
 
-clean:
-	rm -f $(NAME)
+spidev_test: spidev_test.c
+	$(CC) $(CFLAGS)	$(filter %.c,$^) -o $@
 
-install: $(NAME)
+clean:
+	rm -f $(NAME) spidev_test
+
+install: $(NAME) spidev_test
 	mkdir -p $(abspath $(DESTDIR)/$(bindir))
-	cp $(NAME) $(abspath $(DESTDIR)/$(bindir))
-	chmod 755 $(abspath $(DESTDIR)/$(bindir)/$(NAME))
-	chown $(shell id -un):$(shell id -gn) $(abspath $(DESTDIR)/$(bindir)/$(NAME))
+	cp $^ $(abspath $(DESTDIR)/$(bindir))
+	chmod 755 $(foreach x,$^,$(abspath $(DESTDIR)/$(bindir)/$(x)))
+	chown $(shell id -un):$(shell id -gn) $(foreach x,$^,$(abspath $(DESTDIR)/$(bindir)/$(x)))
