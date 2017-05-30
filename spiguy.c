@@ -195,7 +195,7 @@ static options_t parse_args(int argc, char *argv[])
         quit(EXIT_FAILURE);
     }
 
-    if(retval.polarity != 0) {
+    if(retval.polarity == -1) {
         retval.polarity = 0;
     }
 
