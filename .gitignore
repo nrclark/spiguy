@@ -1,0 +1,3 @@
+*.o
+spiguy
+spidev_test
