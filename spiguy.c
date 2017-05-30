@@ -97,7 +97,7 @@ static options_t parse_args(int argc, char *argv[])
             break;
 
         case 's':
-            if(!sscanf(optarg, SCNd32, &retval.speed)) {
+            if(!sscanf(optarg, "%" SCNd32, &retval.speed)) {
                 fprintf(stderr, "%s: Invalid SPI clock speed [%s].\n", progname,
                         optarg);
                 quit(EXIT_FAILURE);
@@ -110,7 +110,7 @@ static options_t parse_args(int argc, char *argv[])
             break;
 
         case 'm':
-            if(!sscanf(optarg, SCNd8, &retval.mode)) {
+            if(!sscanf(optarg, "%" SCNd8, &retval.mode)) {
                 fprintf(stderr, "%s: Invalid SPI transfer mode [%s].\n",
                         progname, optarg);
                 quit(EXIT_FAILURE);
@@ -124,7 +124,7 @@ static options_t parse_args(int argc, char *argv[])
             break;
 
         case 'k':
-            if(!sscanf(optarg, SCNu16, &retval.maxsize)) {
+            if(!sscanf(optarg, "%zu", &retval.maxsize)) {
                 fprintf(stderr, "%s: Invalid transfer size [%s]\n", progname,
                         optarg);
                 quit(EXIT_FAILURE);
@@ -132,7 +132,7 @@ static options_t parse_args(int argc, char *argv[])
             break;
 
         case 'g':
-            if(!sscanf(optarg, SCNd16, &retval.gpio)) {
+            if(!sscanf(optarg, "%" SCNd16, &retval.gpio)) {
                 fprintf(stderr, "%s: Invalid GPIO number [%s]\n", progname,
                         optarg);
                 quit(EXIT_FAILURE);
@@ -140,7 +140,7 @@ static options_t parse_args(int argc, char *argv[])
             break;
 
         case 'p':
-            if(!sscanf(optarg, SCNd8, &retval.polarity)) {
+            if(!sscanf(optarg, "%" SCNd8, &retval.polarity)) {
                 fprintf(stderr, "%s: Invalid GPIO polarity [%s]\n", progname,
                         optarg);
                 quit(EXIT_FAILURE);
