@@ -3,6 +3,7 @@ NAME := spiguy
 
 CC ?= gcc
 CFLAGS ?= -O2 -Wall -Wextra -pedantic -std=gnu99
+LDFLAGS ?=
 SYNTAX_OPTS := $(CFLAGS) -Werror -fsyntax-only
 
 prefix ?= /usr
@@ -39,10 +40,10 @@ format:
 	$(foreach x,$(SRC),astyle --options=astyle.opts $(x)$(\n))
 
 $(NAME): $(SRC)
-	$(CC) $(CFLAGS) $(filter %.c,$^) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) $(filter %.c,$^) -o $@
 
 spidev_test: spidev_test.c
-	$(CC) $(CFLAGS) -Wno-unused-parameter $(filter %.c,$^) -o $@
+	$(CC) $(CFLAGS) $(LDFLAGS) -Wno-unused-parameter $(filter %.c,$^) -o $@
 
 clean:
 	rm -f $(NAME) spidev_test
