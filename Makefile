@@ -11,7 +11,7 @@ bindir ?= $(prefix)/bin
 DESTDIR ?= 
 
 WARNINGS_BLACKLIST := -Wsystem-headers -Wtraditional -Wunused-macros
-WARNINGS_BLACKLIST += -Wdate-time
+WARNINGS_BLACKLIST += -Wdate-time -Wpadded
 
 all: $(NAME) spidev_test
 

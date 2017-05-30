@@ -1,6 +1,7 @@
 #ifndef _SPIGUY_LIB_H_
 #define _SPIGUY_LIB_H_
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stddef.h>
 
@@ -11,6 +12,7 @@ typedef struct options_t {
     int32_t speed;
     char *dev;
     size_t maxsize;
+    bool keep_export;
 } options_t;
 
 int spiguy_run_transfer(char *in, char *out, size_t len, options_t *options);

@@ -261,7 +261,9 @@ int spiguy_run_transfer(char *in, char *out, size_t len, options_t *options)
 
     if(options->gpio != -1) {
         spiguy_file_write(value_file, "0", (size_t) 1);
-        spiguy_gpio_release();
+        if(options->keep_export == false) {
+            spiguy_gpio_release();
+        }
     }
 
     if(retval < 0) {
