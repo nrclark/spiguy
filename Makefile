@@ -42,7 +42,7 @@ $(NAME): $(SRC)
 	$(CC) $(CFLAGS) $(filter %.c,$^) -o $@
 
 spidev_test: spidev_test.c
-	$(CC) $(CFLAGS) $(filter %.c,$^) -o $@
+	$(CC) $(CFLAGS) -Wno-unused-parameter $(filter %.c,$^) -o $@
 
 clean:
 	rm -f $(NAME) spidev_test
