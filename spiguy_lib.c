@@ -163,11 +163,12 @@ void spiguy_gpio_prepare(options_t *options)
 
     if(options->polarity == 1) {
         spiguy_file_write(actlow_file, "0", (size_t) 1);
+        spiguy_file_write(dir_file, "low",  (size_t) 3);
     } else {
         spiguy_file_write(actlow_file, "1", (size_t) 1);
+        spiguy_file_write(dir_file, "high", (size_t) 4);
     }
 
-    spiguy_file_write(dir_file, "low", (size_t) 3);
     spiguy_file_write(value_file, "0", (size_t) 1);
     gpio_valid = true;
 }
