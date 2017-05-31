@@ -13,7 +13,7 @@
 #include "spiguy_lib.h"
 
 #define NAME "spiguy"
-#define VERSION "0.1"
+#define VERSION "1.0"
 
 static char progname[64] = {0};
 static char device[64] = {0};
