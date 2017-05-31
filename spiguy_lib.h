@@ -12,7 +12,7 @@ typedef struct options_t {
     int32_t speed;
     char *dev;
     size_t maxsize;
-    bool keep_export;
+    bool unexport;
 } options_t;
 
 int spiguy_run_transfer(char *in, char *out, size_t len, options_t *options);

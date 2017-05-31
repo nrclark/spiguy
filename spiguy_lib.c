@@ -14,7 +14,7 @@
 
 #include "spiguy_lib.h"
 
-static bool unexport = true;
+static bool gpio_exists = false;
 
 static const char gpio_base[] = "/sys/class/gpio/gpio";
 static const char exporter[] = "/sys/class/gpio/export";
@@ -132,7 +132,6 @@ int spiguy_file_write(const char *name, const char *source, size_t count)
 void spiguy_gpio_prepare(options_t *options)
 {
     struct stat folder_stat;
-    bool gpio_exists = false;
 
     snprintf(gpio_num, sizeof(gpio_num) - 1, "%u", (uint16_t)options->gpio);
     snprintf(gpio, sizeof(gpio) - 1, "/sys/class/gpio/gpio%s", gpio_num);
@@ -148,14 +147,11 @@ void spiguy_gpio_prepare(options_t *options)
 
     if((stat(gpio, &folder_stat) == 0) && S_ISDIR(folder_stat.st_mode)) {
         gpio_exists = true;
+    } else {
+        spiguy_file_write(exporter, gpio_num, strlen(gpio_num));
     }
 
-    if(gpio_exists == false) {
-        if(spiguy_file_write(exporter, gpio_num, strlen(gpio_num)) == 0) {
-            unexport = true;
-        }
-    } else {
-        unexport = false;
+    if(options->unexport && gpio_exists) {
         spiguy_file_read(dir_file, gpio_direction, sizeof(gpio_direction) - 1);
         spiguy_file_read(value_file, gpio_value, sizeof(gpio_value) - 1);
         spiguy_file_read(actlow_file, gpio_actlow, sizeof(gpio_actlow) - 1);
@@ -163,7 +159,7 @@ void spiguy_gpio_prepare(options_t *options)
 
     if(options->polarity == 1) {
         spiguy_file_write(actlow_file, "0", (size_t) 1);
-        spiguy_file_write(dir_file, "low",  (size_t) 3);
+        spiguy_file_write(dir_file, "low", (size_t) 3);
     } else {
         spiguy_file_write(actlow_file, "1", (size_t) 1);
         spiguy_file_write(dir_file, "high", (size_t) 4);
@@ -179,14 +175,14 @@ void spiguy_gpio_release(void)
         return;
     }
 
-    if(unexport) {
-        spiguy_file_write(value_file, "0", (size_t) 1);
-        spiguy_file_write(dir_file, "in", (size_t) 2);
-        spiguy_file_write(unexporter, gpio_num, strlen(gpio_num));
-    } else {
+    if(gpio_exists) {
         spiguy_file_write(dir_file, gpio_direction, strlen(gpio_direction));
         spiguy_file_write(value_file, gpio_value, strlen(gpio_value));
         spiguy_file_write(actlow_file, gpio_actlow, strlen(gpio_actlow));
+    } else {
+        spiguy_file_write(value_file, "0", (size_t) 1);
+        spiguy_file_write(dir_file, "in", (size_t) 2);
+        spiguy_file_write(unexporter, gpio_num, strlen(gpio_num));
     }
 }
 
@@ -262,7 +258,7 @@ int spiguy_run_transfer(char *in, char *out, size_t len, options_t *options)
 
     if(options->gpio != -1) {
         spiguy_file_write(value_file, "0", (size_t) 1);
-        if(options->keep_export == false) {
+        if(options->unexport) {
             spiguy_gpio_release();
         }
     }

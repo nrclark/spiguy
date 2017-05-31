@@ -54,7 +54,7 @@ static void usage(char *name)
     fprintf(stderr, " output.\n");
     fprintf(stderr, "  -p, --polarity=<0,1>  GPIO chip-select polarity. '1' ");
     fprintf(stderr, "is active-high.\n                        (default 0).\n");
-    fprintf(stderr, "  -e, --export          Leave GPIO exported after ");
+    fprintf(stderr, "  -u, --unexport        Unexport/restore GPIO after ");
     fprintf(stderr, "transaction is over.\n");
     fprintf(stderr, "  -h, --help            Display this screen.\n");
     fprintf(stderr, "  -v, --version         Display the version number.\n");
@@ -67,23 +67,23 @@ static options_t parse_args(int argc, char *argv[])
     int long_index = 0;
 
     options_t retval = {.dev = NULL, .speed = -1, .mode = -1, .maxsize = 8192,
-                        .gpio = -1, .polarity = -1, .keep_export = false
+                        .gpio = -1, .polarity = -1, .unexport = false
                        };
 
-    struct option cmd_options[] = {
+    struct option cmd_opts[] = {
         {"speed",    required_argument, NULL, 's'},
         {"mode",     required_argument, NULL, 'm'},
         {"maxsize",  required_argument, NULL, 'k'},
         {"gpio",     required_argument, NULL, 'g'},
         {"polarity", required_argument, NULL, 'p'},
-        {"export",   required_argument, NULL, 'e'},
+        {"unexport", required_argument, NULL, 'e'},
         {"help",    no_argument, NULL, 'h'},
         {"version", no_argument, NULL, 'v'},
         {0, 0, 0, 0}
     };
 
     do {
-        opt = getopt_long(argc, argv, "s:m:k:g:p:ehv", cmd_options, &long_index);
+        opt = getopt_long(argc, argv, "s:m:k:g:p:uhv", cmd_opts, &long_index);
 
         switch(opt) {
         case -1:
@@ -157,8 +157,8 @@ static options_t parse_args(int argc, char *argv[])
             }
             break;
 
-        case 'e':
-            retval.keep_export = true;
+        case 'u':
+            retval.unexport = true;
             break;
 
         default:
@@ -199,8 +199,8 @@ static options_t parse_args(int argc, char *argv[])
         retval.polarity = 0;
     }
 
-    if((retval.keep_export) && (retval.gpio == -1)) {
-        fprintf(stderr, "%s: GPIO export setting is invalid ", progname);
+    if((retval.unexport) && (retval.gpio == -1)) {
+        fprintf(stderr, "%s: GPIO unexport setting is invalid ", progname);
         fprintf(stderr, "without -g/--gpio flag.\n");
         quit(EXIT_FAILURE);
     }
