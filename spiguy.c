@@ -153,6 +153,7 @@ static options_t parse_args(int argc, char *argv[])
                     fprintf(stderr, "Valid input types are [x, d].\n");
                     quit(EXIT_FAILURE);
                 }
+                break;
 
             case 'o':
                 if((*optarg == 'd') || (*optarg == 'x')) {
@@ -163,6 +164,7 @@ static options_t parse_args(int argc, char *argv[])
                     fprintf(stderr, "Valid output types are [x, d].\n");
                     quit(EXIT_FAILURE);
                 }
+                break;
         }
     } while(opt != -1);
 
@@ -298,7 +300,6 @@ int main(int argc, char *argv[])
     }
 
     retval = spiguy_run_transfer(input, output, transfer_size, &opts);
-
 
     if(retval != EXIT_SUCCESS) {
         fprintf(stderr, "%s: Couldn't complete SPI successfully.\n", progname);
