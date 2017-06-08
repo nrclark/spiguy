@@ -8,4 +8,5 @@
 --pad-comma
 --pad-oper
 --indent=spaces=4
+--indent-switches
 --max-code-length=80

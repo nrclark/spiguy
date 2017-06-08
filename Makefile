@@ -1,4 +1,4 @@
-SRC := spiguy.c spiguy_lib.h spiguy_lib.c
+SRC := spiguy.c usage_strings.h spiguy_lib.h spiguy_lib.c
 NAME := spiguy
 
 CC ?= gcc
