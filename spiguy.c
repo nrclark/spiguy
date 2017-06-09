@@ -165,6 +165,11 @@ static options_t parse_args(int argc, char *argv[])
                     quit(EXIT_FAILURE);
                 }
                 break;
+
+            case '?':
+                quit(EXIT_FAILURE);
+                break;
+
         }
     } while(opt != -1);
 
