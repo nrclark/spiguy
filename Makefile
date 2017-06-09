@@ -13,7 +13,7 @@ DESTDIR ?=
 WARNINGS_BLACKLIST := -Wsystem-headers -Wtraditional -Wunused-macros
 WARNINGS_BLACKLIST += -Wdate-time -Wpadded
 
-all: $(NAME) spidev_test
+all: $(NAME)
 
 .INTERMEDIATE: warn.flags
 .PHONY: warn.flags
@@ -42,13 +42,11 @@ format:
 $(NAME): $(SRC)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(filter %.c,$^) -o $@
 
-spidev_test: spidev_test.c
-	$(CC) $(CFLAGS) $(LDFLAGS) -Wno-unused-parameter $(filter %.c,$^) -o $@
-
 clean:
-	rm -f $(NAME) spidev_test
+	rm -f $(NAME)
+	rm -f $(patsubst %.c,%.o,$(filter %.c,$(SRC)))
 
-install: $(NAME) spidev_test
+install: $(NAME)
 	mkdir -p $(abspath $(DESTDIR)/$(bindir))
 	cp $^ $(abspath $(DESTDIR)/$(bindir))
 	chmod 755 $(foreach x,$^,$(abspath $(DESTDIR)/$(bindir)/$(x)))
