@@ -266,6 +266,7 @@ static void write_formatted_output(const char *data, char format, uint32_t len)
         putchar(' ');
         printf(formatter, *(data++));
     }
+    putchar('\n');
 }
 
 int main(int argc, char *argv[])
