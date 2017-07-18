@@ -220,7 +220,7 @@ int spiguy_run_transfer(char *in, char *out, size_t len, options_t *options)
         .len = (unsigned int) len,
         .delay_usecs = 0,
         .bits_per_word = 8,
-        .cs_change = 1,
+        .cs_change = 0,
         .tx_nbits = 8,
         .rx_nbits = 8,
         .pad = 0
